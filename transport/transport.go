@@ -4,7 +4,6 @@ package transport
 import (
 	"bufio"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -15,19 +14,19 @@ import (
 type Transport interface {
 	// ReadMessage reads a message from the transport
 	ReadMessage(ctx context.Context) ([]byte, error)
-	
+
 	// WriteMessage writes a message to the transport
 	WriteMessage(ctx context.Context, message []byte) error
-	
+
 	// Close closes the transport
 	Close() error
 }
 
 // StdioTransport implements Transport for stdin/stdout communication
 type StdioTransport struct {
-	reader   *bufio.Reader
-	writer   io.Writer
-	writeMu  sync.Mutex
+	reader  *bufio.Reader
+	writer  io.Writer
+	writeMu sync.Mutex
 }
 
 // NewStdioTransport creates a new StdioTransport
@@ -80,14 +79,14 @@ func (t *StdioTransport) WriteMessage(ctx context.Context, message []byte) error
 			doneCh <- fmt.Errorf("failed to write message: %w", err)
 			return
 		}
-		
+
 		// Write a newline character to terminate the message
 		_, err = t.writer.Write([]byte("\n"))
 		if err != nil {
 			doneCh <- fmt.Errorf("failed to write newline: %w", err)
 			return
 		}
-		
+
 		doneCh <- nil
 	}()
 

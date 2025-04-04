@@ -6,23 +6,29 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"path/filepath"
 	"sync"
 
-	"github.com/your-username/github-mcp-server-go/protocol"
-	"github.com/your-username/github-mcp-server-go/transport"
-	"github.com/your-username/github-mcp-server-go/github"
+	"github-mcp-server-go/auth"
+	"github-mcp-server-go/config"
+	"github-mcp-server-go/github"
+	"github-mcp-server-go/protocol"
+	"github-mcp-server-go/transport"
 )
 
 // Config represents the server configuration
 type Config struct {
 	// GitHub Personal Access Token
 	Token string
-	
+
 	// Logger for server logs
 	Logger *log.Logger
-	
+
 	// Debug mode
 	Debug bool
+
+	// Config directory for storing data
+	ConfigDir string
 }
 
 // Server represents an MCP server
@@ -32,7 +38,12 @@ type Server struct {
 	client      *github.Client
 	mu          sync.Mutex
 	// registry of supported operations
-	tools       map[string]ToolHandler
+	tools map[string]ToolHandler
+	// authentication tool
+	authTool *auth.Tool
+	// configuration and alias management
+	configManager *config.Manager
+	aliasManager  *config.AliasManager
 }
 
 // ToolHandler is a function that handles a tool call
@@ -40,20 +51,41 @@ type ToolHandler func(context.Context, map[string]interface{}) (*protocol.CallTo
 
 // New creates a new MCP server
 func New(config Config) *Server {
-	return &Server{
+	// Ensure config directory is set
+	if config.ConfigDir == "" {
+		config.ConfigDir = "data"
+	}
+
+	// Create server instance
+	s := &Server{
 		config: config,
 		tools:  make(map[string]ToolHandler),
 	}
+
+	// Initialize configuration manager
+	manager, err := config.NewManager(config.ManagerOptions{
+		ConfigDir: filepath.Join(s.config.ConfigDir, "config"),
+	})
+	if err != nil && s.config.Logger != nil {
+		s.config.Logger.Printf("Failed to initialize config manager: %v", err)
+	}
+	s.configManager = manager
+	// Initialize alias manager if config manager is available
+	if manager != nil {
+		s.aliasManager = config.NewAliasManager(manager.GlobalStore())
+	}
+
+	return s
 }
 
 // Serve starts the server with the given transport
 func (s *Server) Serve(ctx context.Context, t transport.Transport) error {
 	// Initialize GitHub client
 	s.client = github.NewClient(s.config.Token)
-	
+
 	// Register tools
 	s.registerTools()
-	
+
 	// Main message handling loop
 	for {
 		select {
@@ -80,7 +112,7 @@ func (s *Server) Serve(ctx context.Context, t transport.Transport) error {
 
 			// Handle message
 			go func() {
-				response := s.handleRequest(ctx, &request)
+				response := s.HandleRequest(ctx, &request)
 				if err := s.sendResponse(ctx, t, response); err != nil {
 					s.config.Logger.Printf("Error sending response: %v", err)
 				}
@@ -108,7 +140,7 @@ func (s *Server) sendResponse(ctx context.Context, t transport.Transport, respon
 }
 
 // handleRequest handles a request message
-func (s *Server) handleRequest(ctx context.Context, request *protocol.Message) *protocol.Message {
+func (s *Server) HandleRequest(ctx context.Context, request *protocol.Message) *protocol.Message {
 	// Debug log request
 	if s.config.Debug {
 		reqJSON, _ := json.Marshal(request)
@@ -229,21 +261,27 @@ func (s *Server) handleCallTool(ctx context.Context, request *protocol.Message) 
 
 // registerTools registers all supported tools
 func (s *Server) registerTools() {
+	// Register authentication tools
+	s.registerAuthTools()
+
+	// Register configuration tools
+	s.registerConfigTools()
+
 	// Register repository tools
 	s.registerRepositoryTools()
-	
+
 	// Register issue tools
 	s.registerIssueTools()
-	
+
 	// Register pull request tools
 	s.registerPullRequestTools()
-	
+
 	// Register GitHub Actions tools
 	s.registerActionsTools()
-	
+
 	// Register file tools
 	s.registerFileTools()
-	
+
 	// Register search tools
 	s.registerSearchTools()
 }
@@ -260,11 +298,5 @@ func parseParams(params interface{}, dest interface{}) error {
 		return fmt.Errorf("failed to unmarshal params: %w", err)
 	}
 
-	return nil
-}
-
-// Placeholder for getting tool definitions - these would be defined elsewhere
-func getToolDefinition(name string) *protocol.Tool {
-	// This would be implemented to return actual tool definitions
 	return nil
 }

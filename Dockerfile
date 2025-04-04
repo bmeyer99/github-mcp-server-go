@@ -13,6 +13,10 @@ RUN go mod download
 # Copy source code
 COPY . .
 
+# Fix import paths if needed (for Docker build context)
+RUN grep -r "github.com/your-username/github-mcp-server-go" --include="*.go" . | \
+    xargs -r sed -i 's|github.com/your-username/github-mcp-server-go|github-mcp-server-go|g'
+
 # Build the binary
 RUN CGO_ENABLED=0 GOOS=linux go build -o github-mcp-server .
 

@@ -1,11 +1,6 @@
 // github-mcp-server-go/protocol/protocol.go
 package protocol
 
-import (
-	"encoding/json"
-	"fmt"
-)
-
 // Protocol version constants
 const (
 	LatestProtocolVersion = "1.0"
@@ -26,14 +21,14 @@ const (
 	InternalError  = -32603
 
 	// MCP-specific error codes
-	NotInitialized        = -32001
-	AlreadyInitialized    = -32002
-	ResourceNotFound      = -32003
-	InvalidResource       = -32004
-	ToolNotFound          = -32005
-	InvalidTool           = -32006
-	PromptNotFound        = -32007
-	InvalidPrompt         = -32008
+	NotInitialized         = -32001
+	AlreadyInitialized     = -32002
+	ResourceNotFound       = -32003
+	InvalidResource        = -32004
+	ToolNotFound           = -32005
+	InvalidTool            = -32006
+	PromptNotFound         = -32007
+	InvalidPrompt          = -32008
 	CapabilityNotSupported = -32009
 )
 
@@ -145,16 +140,16 @@ type ListToolsResult struct {
 
 // Tool represents a tool
 type Tool struct {
-	Name        string       `json:"name"`
-	Description string       `json:"description"`
-	Schema      ToolSchema   `json:"schema"`
+	Name        string     `json:"name"`
+	Description string     `json:"description"`
+	Schema      ToolSchema `json:"schema"`
 }
 
 // ToolSchema represents the schema for a tool
 type ToolSchema struct {
-	Type       string               `json:"type"`
-	Properties map[string]Property  `json:"properties"`
-	Required   []string             `json:"required,omitempty"`
+	Type       string              `json:"type"`
+	Properties map[string]Property `json:"properties"`
+	Required   []string            `json:"required,omitempty"`
 }
 
 // Property represents a property in a tool schema

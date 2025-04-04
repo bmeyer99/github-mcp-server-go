@@ -7,18 +7,18 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/your-username/github-mcp-server-go/protocol"
-	"github.com/your-username/github-mcp-server-go/github"
+	"github-mcp-server-go/github"
+	"github-mcp-server-go/protocol"
 )
 
 // registerRepositoryTools registers repository-related tools
 func (s *Server) registerRepositoryTools() {
 	// Get repository
 	s.tools["get_repository"] = s.handleGetRepository
-	
+
 	// List repositories
 	s.tools["list_repositories"] = s.handleListRepositories
-	
+
 	// Create repository
 	s.tools["create_repository"] = s.handleCreateRepository
 }
@@ -27,13 +27,13 @@ func (s *Server) registerRepositoryTools() {
 func (s *Server) registerIssueTools() {
 	// Get issue
 	s.tools["get_issue"] = s.handleGetIssue
-	
+
 	// List issues
 	s.tools["list_issues"] = s.handleListIssues
-	
+
 	// Create issue
 	s.tools["create_issue"] = s.handleCreateIssue
-	
+
 	// Close issue
 	s.tools["close_issue"] = s.handleCloseIssue
 }
@@ -42,13 +42,13 @@ func (s *Server) registerIssueTools() {
 func (s *Server) registerPullRequestTools() {
 	// Get pull request
 	s.tools["get_pull_request"] = s.handleGetPullRequest
-	
+
 	// List pull requests
 	s.tools["list_pull_requests"] = s.handleListPullRequests
-	
+
 	// Create pull request
 	s.tools["create_pull_request"] = s.handleCreatePullRequest
-	
+
 	// Merge pull request
 	s.tools["merge_pull_request"] = s.handleMergePullRequest
 }
@@ -57,10 +57,10 @@ func (s *Server) registerPullRequestTools() {
 func (s *Server) registerActionsTools() {
 	// List workflows
 	s.tools["list_workflows"] = s.handleListWorkflows
-	
+
 	// List workflow runs
 	s.tools["list_workflow_runs"] = s.handleListWorkflowRuns
-	
+
 	// Trigger workflow
 	s.tools["trigger_workflow"] = s.handleTriggerWorkflow
 }
@@ -69,13 +69,13 @@ func (s *Server) registerActionsTools() {
 func (s *Server) registerFileTools() {
 	// Get file content
 	s.tools["get_file_content"] = s.handleGetFileContent
-	
+
 	// Create file
 	s.tools["create_file"] = s.handleCreateFile
-	
+
 	// Update file
 	s.tools["update_file"] = s.handleUpdateFile
-	
+
 	// Delete file
 	s.tools["delete_file"] = s.handleDeleteFile
 }
@@ -84,7 +84,7 @@ func (s *Server) registerFileTools() {
 func (s *Server) registerSearchTools() {
 	// Search code
 	s.tools["search_code"] = s.handleSearchCode
-	
+
 	// Search issues
 	s.tools["search_issues"] = s.handleSearchIssues
 }
@@ -98,12 +98,12 @@ func (s *Server) handleGetRepository(ctx context.Context, args map[string]interf
 	if !ok || owner == "" {
 		return nil, fmt.Errorf("owner is required and must be a string")
 	}
-	
+
 	repo, ok := args["repo"].(string)
 	if !ok || repo == "" {
 		return nil, fmt.Errorf("repo is required and must be a string")
 	}
-	
+
 	// Get repository
 	repository, err := s.client.GetRepository(ctx, owner, repo)
 	if err != nil {
@@ -113,7 +113,7 @@ func (s *Server) handleGetRepository(ctx context.Context, args map[string]interf
 			},
 		}, nil
 	}
-	
+
 	// Format result
 	result := fmt.Sprintf(`{
 	"name": "%s",
@@ -124,7 +124,7 @@ func (s *Server) handleGetRepository(ctx context.Context, args map[string]interf
 	"html_url": "%s",
 	"clone_url": "%s"
 }`, repository.Name, repository.FullName, repository.Description, repository.Private, repository.DefaultBranch, repository.HTMLURL, repository.CloneURL)
-	
+
 	return &protocol.CallToolResult{
 		Content: []protocol.Content{
 			protocol.TextContent(result),
@@ -139,12 +139,12 @@ func (s *Server) handleListRepositories(ctx context.Context, args map[string]int
 	if pageArg, ok := args["page"].(float64); ok {
 		page = int(pageArg)
 	}
-	
+
 	perPage := 30
 	if perPageArg, ok := args["per_page"].(float64); ok {
 		perPage = int(perPageArg)
 	}
-	
+
 	// List repositories
 	repositories, err := s.client.ListRepositories(ctx, page, perPage)
 	if err != nil {
@@ -154,7 +154,7 @@ func (s *Server) handleListRepositories(ctx context.Context, args map[string]int
 			},
 		}, nil
 	}
-	
+
 	// Format result
 	result := "[\n"
 	for i, repo := range repositories {
@@ -166,7 +166,7 @@ func (s *Server) handleListRepositories(ctx context.Context, args map[string]int
     "default_branch": "%s",
     "html_url": "%s"
   }`, repo.Name, repo.FullName, repo.Description, repo.Private, repo.DefaultBranch, repo.HTMLURL)
-		
+
 		if i < len(repositories)-1 {
 			result += ",\n"
 		} else {
@@ -174,7 +174,7 @@ func (s *Server) handleListRepositories(ctx context.Context, args map[string]int
 		}
 	}
 	result += "]"
-	
+
 	return &protocol.CallToolResult{
 		Content: []protocol.Content{
 			protocol.TextContent(result),
@@ -189,25 +189,25 @@ func (s *Server) handleCreateRepository(ctx context.Context, args map[string]int
 	if !ok || name == "" {
 		return nil, fmt.Errorf("name is required and must be a string")
 	}
-	
+
 	// Parse optional arguments
 	description := ""
 	if descArg, ok := args["description"].(string); ok {
 		description = descArg
 	}
-	
+
 	private := false
 	if privateArg, ok := args["private"].(bool); ok {
 		private = privateArg
 	}
-	
+
 	// Create repository
 	req := &github.CreateRepositoryRequest{
 		Name:        name,
 		Description: description,
 		Private:     private,
 	}
-	
+
 	repository, err := s.client.CreateRepository(ctx, req)
 	if err != nil {
 		return &protocol.CallToolResult{
@@ -216,7 +216,7 @@ func (s *Server) handleCreateRepository(ctx context.Context, args map[string]int
 			},
 		}, nil
 	}
-	
+
 	// Format result
 	result := fmt.Sprintf(`{
 	"name": "%s",
@@ -227,7 +227,7 @@ func (s *Server) handleCreateRepository(ctx context.Context, args map[string]int
 	"html_url": "%s",
 	"clone_url": "%s"
 }`, repository.Name, repository.FullName, repository.Description, repository.Private, repository.DefaultBranch, repository.HTMLURL, repository.CloneURL)
-	
+
 	return &protocol.CallToolResult{
 		Content: []protocol.Content{
 			protocol.TextContent(result),
@@ -244,23 +244,23 @@ func (s *Server) handleGetFileContent(ctx context.Context, args map[string]inter
 	if !ok || owner == "" {
 		return nil, fmt.Errorf("owner is required and must be a string")
 	}
-	
+
 	repo, ok := args["repo"].(string)
 	if !ok || repo == "" {
 		return nil, fmt.Errorf("repo is required and must be a string")
 	}
-	
+
 	path, ok := args["path"].(string)
 	if !ok || path == "" {
 		return nil, fmt.Errorf("path is required and must be a string")
 	}
-	
+
 	// Parse optional arguments
 	ref := ""
 	if refArg, ok := args["ref"].(string); ok {
 		ref = refArg
 	}
-	
+
 	// Get file content
 	content, err := s.client.GetContent(ctx, owner, repo, path, ref)
 	if err != nil {
@@ -270,7 +270,7 @@ func (s *Server) handleGetFileContent(ctx context.Context, args map[string]inter
 			},
 		}, nil
 	}
-	
+
 	// Decode content if it's base64 encoded
 	decodedContent := content.Content
 	if content.Encoding == "base64" {
@@ -284,7 +284,7 @@ func (s *Server) handleGetFileContent(ctx context.Context, args map[string]inter
 		}
 		decodedContent = string(bytes)
 	}
-	
+
 	// Format result
 	result := fmt.Sprintf(`{
 	"name": "%s",
@@ -294,7 +294,7 @@ func (s *Server) handleGetFileContent(ctx context.Context, args map[string]inter
 	"type": "%s",
 	"content": %s
 }`, content.Name, content.Path, content.SHA, content.Size, content.Type, strconv.Quote(decodedContent))
-	
+
 	return &protocol.CallToolResult{
 		Content: []protocol.Content{
 			protocol.TextContent(result),
@@ -309,40 +309,40 @@ func (s *Server) handleCreateFile(ctx context.Context, args map[string]interface
 	if !ok || owner == "" {
 		return nil, fmt.Errorf("owner is required and must be a string")
 	}
-	
+
 	repo, ok := args["repo"].(string)
 	if !ok || repo == "" {
 		return nil, fmt.Errorf("repo is required and must be a string")
 	}
-	
+
 	path, ok := args["path"].(string)
 	if !ok || path == "" {
 		return nil, fmt.Errorf("path is required and must be a string")
 	}
-	
+
 	content, ok := args["content"].(string)
 	if !ok {
 		return nil, fmt.Errorf("content is required and must be a string")
 	}
-	
+
 	message, ok := args["message"].(string)
 	if !ok || message == "" {
 		return nil, fmt.Errorf("commit message is required and must be a string")
 	}
-	
+
 	// Parse optional arguments
 	branch := ""
 	if branchArg, ok := args["branch"].(string); ok {
 		branch = branchArg
 	}
-	
+
 	// Create file
 	req := &github.CreateFileRequest{
 		Message: message,
 		Content: base64.StdEncoding.EncodeToString([]byte(content)),
 		Branch:  branch,
 	}
-	
+
 	err := s.client.CreateFile(ctx, owner, repo, path, req)
 	if err != nil {
 		return &protocol.CallToolResult{
@@ -351,7 +351,7 @@ func (s *Server) handleCreateFile(ctx context.Context, args map[string]interface
 			},
 		}, nil
 	}
-	
+
 	return &protocol.CallToolResult{
 		Content: []protocol.Content{
 			protocol.TextContent(fmt.Sprintf("File '%s' created successfully in repository '%s/%s'", path, owner, repo)),
@@ -366,38 +366,38 @@ func (s *Server) handleUpdateFile(ctx context.Context, args map[string]interface
 	if !ok || owner == "" {
 		return nil, fmt.Errorf("owner is required and must be a string")
 	}
-	
+
 	repo, ok := args["repo"].(string)
 	if !ok || repo == "" {
 		return nil, fmt.Errorf("repo is required and must be a string")
 	}
-	
+
 	path, ok := args["path"].(string)
 	if !ok || path == "" {
 		return nil, fmt.Errorf("path is required and must be a string")
 	}
-	
+
 	content, ok := args["content"].(string)
 	if !ok {
 		return nil, fmt.Errorf("content is required and must be a string")
 	}
-	
+
 	message, ok := args["message"].(string)
 	if !ok || message == "" {
 		return nil, fmt.Errorf("commit message is required and must be a string")
 	}
-	
+
 	sha, ok := args["sha"].(string)
 	if !ok || sha == "" {
 		return nil, fmt.Errorf("sha is required and must be a string")
 	}
-	
+
 	// Parse optional arguments
 	branch := ""
 	if branchArg, ok := args["branch"].(string); ok {
 		branch = branchArg
 	}
-	
+
 	// Update file
 	req := &github.UpdateFileRequest{
 		Message: message,
@@ -405,7 +405,7 @@ func (s *Server) handleUpdateFile(ctx context.Context, args map[string]interface
 		SHA:     sha,
 		Branch:  branch,
 	}
-	
+
 	err := s.client.UpdateFile(ctx, owner, repo, path, req)
 	if err != nil {
 		return &protocol.CallToolResult{
@@ -414,7 +414,7 @@ func (s *Server) handleUpdateFile(ctx context.Context, args map[string]interface
 			},
 		}, nil
 	}
-	
+
 	return &protocol.CallToolResult{
 		Content: []protocol.Content{
 			protocol.TextContent(fmt.Sprintf("File '%s' updated successfully in repository '%s/%s'", path, owner, repo)),
@@ -429,40 +429,40 @@ func (s *Server) handleDeleteFile(ctx context.Context, args map[string]interface
 	if !ok || owner == "" {
 		return nil, fmt.Errorf("owner is required and must be a string")
 	}
-	
+
 	repo, ok := args["repo"].(string)
 	if !ok || repo == "" {
 		return nil, fmt.Errorf("repo is required and must be a string")
 	}
-	
+
 	path, ok := args["path"].(string)
 	if !ok || path == "" {
 		return nil, fmt.Errorf("path is required and must be a string")
 	}
-	
+
 	message, ok := args["message"].(string)
 	if !ok || message == "" {
 		return nil, fmt.Errorf("commit message is required and must be a string")
 	}
-	
+
 	sha, ok := args["sha"].(string)
 	if !ok || sha == "" {
 		return nil, fmt.Errorf("sha is required and must be a string")
 	}
-	
+
 	// Parse optional arguments
 	branch := ""
 	if branchArg, ok := args["branch"].(string); ok {
 		branch = branchArg
 	}
-	
+
 	// Delete file
 	req := &github.DeleteFileRequest{
 		Message: message,
 		SHA:     sha,
 		Branch:  branch,
 	}
-	
+
 	err := s.client.DeleteFile(ctx, owner, repo, path, req)
 	if err != nil {
 		return &protocol.CallToolResult{
@@ -471,7 +471,7 @@ func (s *Server) handleDeleteFile(ctx context.Context, args map[string]interface
 			},
 		}, nil
 	}
-	
+
 	return &protocol.CallToolResult{
 		Content: []protocol.Content{
 			protocol.TextContent(fmt.Sprintf("File '%s' deleted successfully from repository '%s/%s'", path, owner, repo)),
@@ -488,12 +488,12 @@ func (s *Server) handleGetIssue(ctx context.Context, args map[string]interface{}
 	if !ok || owner == "" {
 		return nil, fmt.Errorf("owner is required and must be a string")
 	}
-	
+
 	repo, ok := args["repo"].(string)
 	if !ok || repo == "" {
 		return nil, fmt.Errorf("repo is required and must be a string")
 	}
-	
+
 	// Parse number argument
 	var number int
 	switch n := args["number"].(type) {
@@ -510,7 +510,7 @@ func (s *Server) handleGetIssue(ctx context.Context, args map[string]interface{}
 	default:
 		return nil, fmt.Errorf("number is required and must be an integer")
 	}
-	
+
 	// Get issue
 	issue, err := s.client.GetIssue(ctx, owner, repo, number)
 	if err != nil {
@@ -520,7 +520,7 @@ func (s *Server) handleGetIssue(ctx context.Context, args map[string]interface{}
 			},
 		}, nil
 	}
-	
+
 	// Format result
 	result := fmt.Sprintf(`{
 	"number": %d,
@@ -531,7 +531,7 @@ func (s *Server) handleGetIssue(ctx context.Context, args map[string]interface{}
 	"updated_at": "%s",
 	"body": %s
 }`, issue.Number, issue.Title, issue.State, issue.HTMLURL, issue.CreatedAt, issue.UpdatedAt, strconv.Quote(issue.Body))
-	
+
 	return &protocol.CallToolResult{
 		Content: []protocol.Content{
 			protocol.TextContent(result),
@@ -546,28 +546,28 @@ func (s *Server) handleListIssues(ctx context.Context, args map[string]interface
 	if !ok || owner == "" {
 		return nil, fmt.Errorf("owner is required and must be a string")
 	}
-	
+
 	repo, ok := args["repo"].(string)
 	if !ok || repo == "" {
 		return nil, fmt.Errorf("repo is required and must be a string")
 	}
-	
+
 	// Parse optional arguments
 	state := "open"
 	if stateArg, ok := args["state"].(string); ok && (stateArg == "open" || stateArg == "closed" || stateArg == "all") {
 		state = stateArg
 	}
-	
+
 	page := 1
 	if pageArg, ok := args["page"].(float64); ok {
 		page = int(pageArg)
 	}
-	
+
 	perPage := 30
 	if perPageArg, ok := args["per_page"].(float64); ok {
 		perPage = int(perPageArg)
 	}
-	
+
 	// Parse labels argument
 	var labels []string
 	if labelsArg, ok := args["labels"]; ok {
@@ -584,7 +584,7 @@ func (s *Server) handleListIssues(ctx context.Context, args map[string]interface
 			}
 		}
 	}
-	
+
 	// Create options
 	opts := &github.ListIssuesOptions{
 		State:   state,
@@ -592,7 +592,7 @@ func (s *Server) handleListIssues(ctx context.Context, args map[string]interface
 		Page:    page,
 		PerPage: perPage,
 	}
-	
+
 	// List issues
 	issues, err := s.client.ListIssues(ctx, owner, repo, opts)
 	if err != nil {
@@ -602,7 +602,7 @@ func (s *Server) handleListIssues(ctx context.Context, args map[string]interface
 			},
 		}, nil
 	}
-	
+
 	// Format result
 	result := "[\n"
 	for i, issue := range issues {
@@ -613,7 +613,7 @@ func (s *Server) handleListIssues(ctx context.Context, args map[string]interface
     "html_url": "%s",
     "created_at": "%s"
   }`, issue.Number, issue.Title, issue.State, issue.HTMLURL, issue.CreatedAt)
-		
+
 		if i < len(issues)-1 {
 			result += ",\n"
 		} else {
@@ -621,7 +621,7 @@ func (s *Server) handleListIssues(ctx context.Context, args map[string]interface
 		}
 	}
 	result += "]"
-	
+
 	return &protocol.CallToolResult{
 		Content: []protocol.Content{
 			protocol.TextContent(result),
@@ -636,23 +636,23 @@ func (s *Server) handleCreateIssue(ctx context.Context, args map[string]interfac
 	if !ok || owner == "" {
 		return nil, fmt.Errorf("owner is required and must be a string")
 	}
-	
+
 	repo, ok := args["repo"].(string)
 	if !ok || repo == "" {
 		return nil, fmt.Errorf("repo is required and must be a string")
 	}
-	
+
 	title, ok := args["title"].(string)
 	if !ok || title == "" {
 		return nil, fmt.Errorf("title is required and must be a string")
 	}
-	
+
 	// Parse optional arguments
 	body := ""
 	if bodyArg, ok := args["body"].(string); ok {
 		body = bodyArg
 	}
-	
+
 	// Parse assignees argument
 	var assignees []string
 	if assigneesArg, ok := args["assignees"]; ok {
@@ -669,7 +669,7 @@ func (s *Server) handleCreateIssue(ctx context.Context, args map[string]interfac
 			}
 		}
 	}
-	
+
 	// Parse labels argument
 	var labels []string
 	if labelsArg, ok := args["labels"]; ok {
@@ -686,7 +686,7 @@ func (s *Server) handleCreateIssue(ctx context.Context, args map[string]interfac
 			}
 		}
 	}
-	
+
 	// Create request
 	req := &github.CreateIssueRequest{
 		Title:     title,
@@ -694,7 +694,7 @@ func (s *Server) handleCreateIssue(ctx context.Context, args map[string]interfac
 		Assignees: assignees,
 		Labels:    labels,
 	}
-	
+
 	// Create issue
 	issue, err := s.client.CreateIssue(ctx, owner, repo, req)
 	if err != nil {
@@ -704,14 +704,14 @@ func (s *Server) handleCreateIssue(ctx context.Context, args map[string]interfac
 			},
 		}, nil
 	}
-	
+
 	// Format result
 	result := fmt.Sprintf(`{
 	"number": %d,
 	"title": "%s",
 	"html_url": "%s"
 }`, issue.Number, issue.Title, issue.HTMLURL)
-	
+
 	return &protocol.CallToolResult{
 		Content: []protocol.Content{
 			protocol.TextContent(result),
@@ -721,30 +721,17 @@ func (s *Server) handleCreateIssue(ctx context.Context, args map[string]interfac
 
 // handleCloseIssue handles the close_issue tool
 func (s *Server) handleCloseIssue(ctx context.Context, args map[string]interface{}) (*protocol.CallToolResult, error) {
-	// This would be implemented to close an issue
-	// Not implemented in this example
-	return &protocol.CallToolResult{
-		Content: []protocol.Content{
-			protocol.ErrorContent("Not implemented"),
-		},
-	}, nil
-}
-
-// ============== Pull Request Tool Handlers ==============
-
-// handleGetPullRequest handles the get_pull_request tool
-func (s *Server) handleGetPullRequest(ctx context.Context, args map[string]interface{}) (*protocol.CallToolResult, error) {
 	// Validate arguments
 	owner, ok := args["owner"].(string)
 	if !ok || owner == "" {
 		return nil, fmt.Errorf("owner is required and must be a string")
 	}
-	
+
 	repo, ok := args["repo"].(string)
 	if !ok || repo == "" {
 		return nil, fmt.Errorf("repo is required and must be a string")
 	}
-	
+
 	// Parse number argument
 	var number int
 	switch n := args["number"].(type) {
@@ -761,7 +748,56 @@ func (s *Server) handleGetPullRequest(ctx context.Context, args map[string]inter
 	default:
 		return nil, fmt.Errorf("number is required and must be an integer")
 	}
-	
+
+	// Close issue
+	err := s.client.CloseIssue(ctx, owner, repo, number)
+	if err != nil {
+		return &protocol.CallToolResult{
+			Content: []protocol.Content{
+				protocol.ErrorContent(fmt.Sprintf("Failed to close issue: %v", err)),
+			},
+		}, nil
+	}
+
+	return &protocol.CallToolResult{
+		Content: []protocol.Content{
+			protocol.TextContent(fmt.Sprintf("Issue #%d closed successfully in repository '%s/%s'", number, owner, repo)),
+		},
+	}, nil
+}
+
+// ============== Pull Request Tool Handlers ==============
+
+// handleGetPullRequest handles the get_pull_request tool
+func (s *Server) handleGetPullRequest(ctx context.Context, args map[string]interface{}) (*protocol.CallToolResult, error) {
+	// Validate arguments
+	owner, ok := args["owner"].(string)
+	if !ok || owner == "" {
+		return nil, fmt.Errorf("owner is required and must be a string")
+	}
+
+	repo, ok := args["repo"].(string)
+	if !ok || repo == "" {
+		return nil, fmt.Errorf("repo is required and must be a string")
+	}
+
+	// Parse number argument
+	var number int
+	switch n := args["number"].(type) {
+	case float64:
+		number = int(n)
+	case int:
+		number = n
+	case string:
+		var err error
+		number, err = strconv.Atoi(n)
+		if err != nil {
+			return nil, fmt.Errorf("number must be an integer: %v", err)
+		}
+	default:
+		return nil, fmt.Errorf("number is required and must be an integer")
+	}
+
 	// Get pull request
 	pr, err := s.client.GetPullRequest(ctx, owner, repo, number)
 	if err != nil {
@@ -771,7 +807,7 @@ func (s *Server) handleGetPullRequest(ctx context.Context, args map[string]inter
 			},
 		}, nil
 	}
-	
+
 	// Format result
 	result := fmt.Sprintf(`{
 	"number": %d,
@@ -802,7 +838,7 @@ func (s *Server) handleGetPullRequest(ctx context.Context, args map[string]inter
 		pr.Head.Ref, pr.Head.SHA, pr.Head.Repo.Name, pr.Head.Repo.FullName,
 		pr.Base.Ref, pr.Base.SHA, pr.Base.Repo.Name, pr.Base.Repo.FullName,
 		strconv.Quote(pr.Body))
-	
+
 	return &protocol.CallToolResult{
 		Content: []protocol.Content{
 			protocol.TextContent(result),
@@ -817,47 +853,49 @@ func (s *Server) handleListPullRequests(ctx context.Context, args map[string]int
 	if !ok || owner == "" {
 		return nil, fmt.Errorf("owner is required and must be a string")
 	}
-	
+
 	repo, ok := args["repo"].(string)
 	if !ok || repo == "" {
 		return nil, fmt.Errorf("repo is required and must be a string")
 	}
-	
+
 	// Parse optional arguments
 	state := "open"
 	if stateArg, ok := args["state"].(string); ok && (stateArg == "open" || stateArg == "closed" || stateArg == "all") {
 		state = stateArg
 	}
-	
+
 	page := 1
 	if pageArg, ok := args["page"].(float64); ok {
 		page = int(pageArg)
 	}
-	
+
 	perPage := 30
 	if perPageArg, ok := args["per_page"].(float64); ok {
 		perPage = int(perPageArg)
 	}
-	
+
+	// Parse head argument
 	head := ""
 	if headArg, ok := args["head"].(string); ok {
 		head = headArg
 	}
-	
+
+	// Parse base argument
 	base := ""
 	if baseArg, ok := args["base"].(string); ok {
 		base = baseArg
 	}
-	
+
 	// Create options
 	opts := &github.ListPullRequestsOptions{
-		State:     state,
-		Head:      head,
-		Base:      base,
-		Page:      page,
-		PerPage:   perPage,
+		State:   state,
+		Head:    head,
+		Base:    base,
+		Page:    page,
+		PerPage: perPage,
 	}
-	
+
 	// List pull requests
 	prs, err := s.client.ListPullRequests(ctx, owner, repo, opts)
 	if err != nil {
@@ -867,7 +905,7 @@ func (s *Server) handleListPullRequests(ctx context.Context, args map[string]int
 			},
 		}, nil
 	}
-	
+
 	// Format result
 	result := "[\n"
 	for i, pr := range prs {
@@ -884,7 +922,7 @@ func (s *Server) handleListPullRequests(ctx context.Context, args map[string]int
       "ref": "%s"
     }
   }`, pr.Number, pr.Title, pr.State, pr.HTMLURL, pr.CreatedAt, pr.Head.Ref, pr.Base.Ref)
-		
+
 		if i < len(prs)-1 {
 			result += ",\n"
 		} else {
@@ -892,7 +930,7 @@ func (s *Server) handleListPullRequests(ctx context.Context, args map[string]int
 		}
 	}
 	result += "]"
-	
+
 	return &protocol.CallToolResult{
 		Content: []protocol.Content{
 			protocol.TextContent(result),
@@ -907,38 +945,38 @@ func (s *Server) handleCreatePullRequest(ctx context.Context, args map[string]in
 	if !ok || owner == "" {
 		return nil, fmt.Errorf("owner is required and must be a string")
 	}
-	
+
 	repo, ok := args["repo"].(string)
 	if !ok || repo == "" {
 		return nil, fmt.Errorf("repo is required and must be a string")
 	}
-	
+
 	title, ok := args["title"].(string)
 	if !ok || title == "" {
 		return nil, fmt.Errorf("title is required and must be a string")
 	}
-	
+
 	head, ok := args["head"].(string)
 	if !ok || head == "" {
 		return nil, fmt.Errorf("head branch is required and must be a string")
 	}
-	
+
 	base, ok := args["base"].(string)
 	if !ok || base == "" {
 		return nil, fmt.Errorf("base branch is required and must be a string")
 	}
-	
+
 	// Parse optional arguments
 	body := ""
 	if bodyArg, ok := args["body"].(string); ok {
 		body = bodyArg
 	}
-	
+
 	draft := false
 	if draftArg, ok := args["draft"].(bool); ok {
 		draft = draftArg
 	}
-	
+
 	// Create request
 	req := &github.CreatePullRequestRequest{
 		Title: title,
@@ -947,7 +985,7 @@ func (s *Server) handleCreatePullRequest(ctx context.Context, args map[string]in
 		Base:  base,
 		Draft: draft,
 	}
-	
+
 	// Create pull request
 	pr, err := s.client.CreatePullRequest(ctx, owner, repo, req)
 	if err != nil {
@@ -957,14 +995,14 @@ func (s *Server) handleCreatePullRequest(ctx context.Context, args map[string]in
 			},
 		}, nil
 	}
-	
+
 	// Format result
 	result := fmt.Sprintf(`{
 	"number": %d,
 	"title": "%s",
 	"html_url": "%s"
 }`, pr.Number, pr.Title, pr.HTMLURL)
-	
+
 	return &protocol.CallToolResult{
 		Content: []protocol.Content{
 			protocol.TextContent(result),
@@ -992,23 +1030,23 @@ func (s *Server) handleListWorkflows(ctx context.Context, args map[string]interf
 	if !ok || owner == "" {
 		return nil, fmt.Errorf("owner is required and must be a string")
 	}
-	
+
 	repo, ok := args["repo"].(string)
 	if !ok || repo == "" {
 		return nil, fmt.Errorf("repo is required and must be a string")
 	}
-	
+
 	// Parse optional arguments
 	page := 1
 	if pageArg, ok := args["page"].(float64); ok {
 		page = int(pageArg)
 	}
-	
+
 	perPage := 30
 	if perPageArg, ok := args["per_page"].(float64); ok {
 		perPage = int(perPageArg)
 	}
-	
+
 	// List workflows
 	workflows, err := s.client.ListWorkflows(ctx, owner, repo, page, perPage)
 	if err != nil {
@@ -1018,7 +1056,7 @@ func (s *Server) handleListWorkflows(ctx context.Context, args map[string]interf
 			},
 		}, nil
 	}
-	
+
 	// Format result
 	result := "[\n"
 	for i, workflow := range workflows {
@@ -1028,7 +1066,7 @@ func (s *Server) handleListWorkflows(ctx context.Context, args map[string]interf
     "path": "%s",
     "state": "%s"
   }`, workflow.ID, workflow.Name, workflow.Path, workflow.State)
-		
+
 		if i < len(workflows)-1 {
 			result += ",\n"
 		} else {
@@ -1036,7 +1074,7 @@ func (s *Server) handleListWorkflows(ctx context.Context, args map[string]interf
 		}
 	}
 	result += "]"
-	
+
 	return &protocol.CallToolResult{
 		Content: []protocol.Content{
 			protocol.TextContent(result),
@@ -1051,12 +1089,12 @@ func (s *Server) handleListWorkflowRuns(ctx context.Context, args map[string]int
 	if !ok || owner == "" {
 		return nil, fmt.Errorf("owner is required and must be a string")
 	}
-	
+
 	repo, ok := args["repo"].(string)
 	if !ok || repo == "" {
 		return nil, fmt.Errorf("repo is required and must be a string")
 	}
-	
+
 	// Parse workflow_id argument
 	var workflowID int64
 	switch w := args["workflow_id"].(type) {
@@ -1076,18 +1114,18 @@ func (s *Server) handleListWorkflowRuns(ctx context.Context, args map[string]int
 	default:
 		return nil, fmt.Errorf("workflow_id is required and must be an integer")
 	}
-	
+
 	// Parse optional arguments
 	page := 1
 	if pageArg, ok := args["page"].(float64); ok {
 		page = int(pageArg)
 	}
-	
+
 	perPage := 30
 	if perPageArg, ok := args["per_page"].(float64); ok {
 		perPage = int(perPageArg)
 	}
-	
+
 	// List workflow runs
 	runs, err := s.client.ListWorkflowRuns(ctx, owner, repo, workflowID, page, perPage)
 	if err != nil {
@@ -1097,7 +1135,7 @@ func (s *Server) handleListWorkflowRuns(ctx context.Context, args map[string]int
 			},
 		}, nil
 	}
-	
+
 	// Format result
 	result := "[\n"
 	for i, run := range runs {
@@ -1112,7 +1150,7 @@ func (s *Server) handleListWorkflowRuns(ctx context.Context, args map[string]int
     "created_at": "%s",
     "updated_at": "%s"
   }`, run.ID, run.Name, run.HeadBranch, run.HeadSHA, run.Status, run.Conclusion, run.HTMLURL, run.CreatedAt, run.UpdatedAt)
-		
+
 		if i < len(runs)-1 {
 			result += ",\n"
 		} else {
@@ -1120,7 +1158,7 @@ func (s *Server) handleListWorkflowRuns(ctx context.Context, args map[string]int
 		}
 	}
 	result += "]"
-	
+
 	return &protocol.CallToolResult{
 		Content: []protocol.Content{
 			protocol.TextContent(result),
@@ -1135,12 +1173,12 @@ func (s *Server) handleTriggerWorkflow(ctx context.Context, args map[string]inte
 	if !ok || owner == "" {
 		return nil, fmt.Errorf("owner is required and must be a string")
 	}
-	
+
 	repo, ok := args["repo"].(string)
 	if !ok || repo == "" {
 		return nil, fmt.Errorf("repo is required and must be a string")
 	}
-	
+
 	// Parse workflow_id argument
 	var workflowID int64
 	switch w := args["workflow_id"].(type) {
@@ -1160,24 +1198,24 @@ func (s *Server) handleTriggerWorkflow(ctx context.Context, args map[string]inte
 	default:
 		return nil, fmt.Errorf("workflow_id is required and must be an integer")
 	}
-	
+
 	ref, ok := args["ref"].(string)
 	if !ok || ref == "" {
 		return nil, fmt.Errorf("ref is required and must be a string")
 	}
-	
+
 	// Parse inputs argument
 	inputs := make(map[string]interface{})
 	if inputsArg, ok := args["inputs"].(map[string]interface{}); ok {
 		inputs = inputsArg
 	}
-	
+
 	// Create request
 	req := &github.TriggerWorkflowRequest{
 		Ref:    ref,
 		Inputs: inputs,
 	}
-	
+
 	// Trigger workflow
 	err := s.client.TriggerWorkflow(ctx, owner, repo, workflowID, req)
 	if err != nil {
@@ -1187,7 +1225,7 @@ func (s *Server) handleTriggerWorkflow(ctx context.Context, args map[string]inte
 			},
 		}, nil
 	}
-	
+
 	return &protocol.CallToolResult{
 		Content: []protocol.Content{
 			protocol.TextContent(fmt.Sprintf("Workflow '%d' triggered successfully in repository '%s/%s' on ref '%s'", workflowID, owner, repo, ref)),
@@ -1204,33 +1242,43 @@ func (s *Server) handleSearchCode(ctx context.Context, args map[string]interface
 	if !ok || query == "" {
 		return nil, fmt.Errorf("query is required and must be a string")
 	}
-	
+
 	// Parse optional arguments
 	page := 1
 	if pageArg, ok := args["page"].(float64); ok {
 		page = int(pageArg)
 	}
-	
+
 	perPage := 30
 	if perPageArg, ok := args["per_page"].(float64); ok {
 		perPage = int(perPageArg)
 	}
-	
+
 	// Search code
 	result, err := s.client.SearchCode(ctx, query, page, perPage)
 	if err != nil {
+		// Return the actual GitHub error message
 		return &protocol.CallToolResult{
 			Content: []protocol.Content{
-				protocol.ErrorContent(fmt.Sprintf("Failed to search code: %v", err)),
+				protocol.ErrorContent(fmt.Sprintf("GitHub Search Error: %v", err)),
 			},
 		}, nil
 	}
-	
+
+	// If no results found, return empty response
+	if result == nil || len(result.Items) == 0 {
+		return &protocol.CallToolResult{
+			Content: []protocol.Content{
+				protocol.TextContent(`{"total_count": 0, "items": []}`),
+			},
+		}, nil
+	}
+
 	// Format result
 	response := fmt.Sprintf(`{
 	"total_count": %d,
 	"items": [`, result.TotalCount)
-	
+
 	for i, item := range result.Items {
 		response += fmt.Sprintf(`
 		{
@@ -1242,16 +1290,16 @@ func (s *Server) handleSearchCode(ctx context.Context, args map[string]interface
 				"full_name": "%s"
 			}
 		}`, item.Name, item.Path, item.HTMLURL, item.Repository.Name, item.Repository.FullName)
-		
+
 		if i < len(result.Items)-1 {
 			response += ","
 		}
 	}
-	
+
 	response += `
 	]
 }`
-	
+
 	return &protocol.CallToolResult{
 		Content: []protocol.Content{
 			protocol.TextContent(response),
@@ -1266,18 +1314,18 @@ func (s *Server) handleSearchIssues(ctx context.Context, args map[string]interfa
 	if !ok || query == "" {
 		return nil, fmt.Errorf("query is required and must be a string")
 	}
-	
+
 	// Parse optional arguments
 	page := 1
 	if pageArg, ok := args["page"].(float64); ok {
 		page = int(pageArg)
 	}
-	
+
 	perPage := 30
 	if perPageArg, ok := args["per_page"].(float64); ok {
 		perPage = int(perPageArg)
 	}
-	
+
 	// Search issues
 	result, err := s.client.SearchIssues(ctx, query, page, perPage)
 	if err != nil {
@@ -1287,12 +1335,12 @@ func (s *Server) handleSearchIssues(ctx context.Context, args map[string]interfa
 			},
 		}, nil
 	}
-	
+
 	// Format result
 	response := fmt.Sprintf(`{
 	"total_count": %d,
 	"items": [`, result.TotalCount)
-	
+
 	for i, item := range result.Items {
 		response += fmt.Sprintf(`
 		{
@@ -1302,16 +1350,16 @@ func (s *Server) handleSearchIssues(ctx context.Context, args map[string]interfa
 			"html_url": "%s",
 			"created_at": "%s"
 		}`, item.Number, item.Title, item.State, item.HTMLURL, item.CreatedAt)
-		
+
 		if i < len(result.Items)-1 {
 			response += ","
 		}
 	}
-	
+
 	response += `
 	]
 }`
-	
+
 	return &protocol.CallToolResult{
 		Content: []protocol.Content{
 			protocol.TextContent(response),

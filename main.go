@@ -9,8 +9,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/your-username/github-mcp-server-go/server"
-	"github.com/your-username/github-mcp-server-go/transport"
+	"github-mcp-server-go/server"
+	"github-mcp-server-go/transport"
 )
 
 func main() {
